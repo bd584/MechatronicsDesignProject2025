@@ -10,13 +10,14 @@ This is an example to setup a UDP Listener.
 # First we import our libraries
 import socket   # This library will allow you to communicate over the network
 import sys      # This library will give us some information about your system
+import time     # This library will allow us to access the system clock for pause/sleep/delay actions
 
 # First we need to set the IP and PORT we are going to listen to
 # This is the localhost IP address (this machine)
-UDP_IP = "127.0.0.1"
+UDP_IP = "172.26.153.174"
  
 # This is the LOCAL port I am expecting data (on the sending machine this is the REMOTE port)
-UDP_PORT = 50001
+UDP_PORT = 50002
 
 # Create the socket for the UDP communication
 sock = socket.socket(socket.AF_INET,    # Family of addresses, in this case IP (Internet Protocol) family 
@@ -31,7 +32,9 @@ while True:
     #Read data
     data, addr = sock.recvfrom(1024) # buffer size is 1024 bytes
     # Print data
+
     print ("received message:", data.decode('utf-8')) # As a string (check the ASCII table)
     print ("received bytes:", list(data)) # As byte values
     print ("from address:", addr) # Print the address of the sender
     print("-----")
+    time.sleep(1) # Small delay to avoid flooding the terminal
