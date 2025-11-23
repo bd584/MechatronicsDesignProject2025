@@ -28,10 +28,10 @@ processing_period = 0.25
 
 # Create two OpenCV named windows
 cv2.namedWindow("Frame", cv2.WINDOW_AUTOSIZE)
-cv2.namedWindow("Gray", cv2.WINDOW_AUTOSIZE)
+#cv2.namedWindow("Gray", cv2.WINDOW_AUTOSIZE)
 
 # Position the windows next to each other
-cv2.moveWindow("Gray", 640, 100)
+#cv2.moveWindow("Gray", 640, 100)
 cv2.moveWindow("Frame", 0, 100)
 # Start capturing video
 cap = cv2.VideoCapture(0)
@@ -49,7 +49,7 @@ while True:
 
     # Convert frame to grayscale
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    cv2.imshow('gray-image', gray)
+    #cv2.imshow('gray-image', gray)
 
     # Detect markers
     corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
