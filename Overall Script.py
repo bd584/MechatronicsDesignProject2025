@@ -6,6 +6,13 @@ import cv2.aruco as aruco
 import numpy as np
 import time # To ensure a steady processing rate
 import logging 
+import socket  # For UDP communication
+
+# UDP configuration
+UDP_IP = "138.38.229.217"  # Replace with your Raspberry Pi's IP address
+UDP_PORT = 50002  # Port to send messages to
+sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Create UDP socket
+
 
 #Camera calibration completed on 17.11.25 
 
@@ -32,13 +39,10 @@ parameters = aruco.DetectorParameters()
 # Define a processing rate
 processing_period = 0.25
 
-# Create two OpenCV named windows
+# Create a window showing the frame
 cv2.namedWindow("Frame", cv2.WINDOW_AUTOSIZE)
-#cv2.namedWindow("Gray", cv2.WINDOW_AUTOSIZE)
 
-# Position the windows next to each other
-#cv2.moveWindow("Gray", 640, 100)
-cv2.moveWindow("Frame", 0, 100)
+
 # Start capturing video
 cap = cv2.VideoCapture(0)
 
@@ -52,10 +56,6 @@ while True:
     if not ret:
         print("Can't receive frame (stream end?). Exiting ...")
         break
-
-    # Convert frame to grayscale
-    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
-    #cv2.imshow('gray-image', gray)
 
     # Detect markers
     corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
@@ -86,6 +86,15 @@ while True:
             
             # Draw axis for each marker
             frame = cv2.drawFrameAxes(frame, CM, dist_coef, rvec, tvec, 100)
+
+            # Send movement command based on X-distance
+            if x_distance_cm > x_threshold:
+                message = "2"
+            elif x_distance_cm < -x_threshold:
+                message = "1"
+            else:
+                message = "0"  # Aligned
+            sock.sendto(bytearray(message,'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
 
             # Check alignment
             if abs(x_distance_cm) <= x_threshold:
