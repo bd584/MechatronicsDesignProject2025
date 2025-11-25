@@ -30,8 +30,40 @@ camera_calibration = np.load('Sample_Calibration.npz')
 CM=camera_calibration['CM'] #camera matrix
 dist_coef=camera_calibration['dist_coef']# distortion coefficients from the camera
 
-# Target ArUco IDs in required order
-target_ids = list(range(1, 9))  # [1,2,...8]
+# Maximum ID allowed for user entry (this project uses markers 1..12)
+MAX_AREUCO_ID = 12
+
+# Ask the user which ArUco targets (IDs) they want to visit, in order
+def get_user_targets(max_id=MAX_AREUCO_ID):
+    while True:
+        try:
+            num = int(input(f"Enter the number of targets to hit (1-{max_id}): "))
+            if 1 <= num <= max_id:
+                break
+            print(f"Please enter a number between 1 and {max_id}.")
+        except ValueError:
+            print("Invalid input. Enter an integer.")
+
+    targets = []
+    for i in range(num):
+        while True:
+            try:
+                entry = int(input(f"Enter target #{i+1} ArUCo ID (1-{max_id}): "))
+                if not (1 <= entry <= max_id):
+                    print(f"ID must be between 1 and {max_id} (inclusive).")
+                    continue
+                if entry in targets:
+                    print("You already entered that ID. Please enter a different one.")
+                    continue
+                targets.append(entry)
+                break
+            except ValueError:
+                print("Invalid input. Enter an integer.")
+    return targets
+
+# Target ArUco IDs in order the user wants to visit
+target_ids = get_user_targets()
+logger.info(f"Target sequence set by user: {target_ids}")
 
 current_target_index = 0
 x_threshold = 10 # 1cm = aligned
