@@ -85,6 +85,9 @@ while True:
 
                 current_target_index += 1
 
+                target_missing_start = None  # Reset timer for next target
+                
+
         for i, (rvec, tvec) in enumerate(zip(rvecs, tvecs)):
             marker_id = ids[i][0]
 
