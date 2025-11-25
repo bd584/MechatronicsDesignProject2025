@@ -31,10 +31,11 @@ CM=camera_calibration['CM'] #camera matrix
 dist_coef=camera_calibration['dist_coef']# distortion coefficients from the camera
 
 # Target ArUco IDs in required order
-target_ids = list(range(1, 13))  # [1,2,...12]
+target_ids = list(range(1, 9))  # [1,2,...8]
 
 current_target_index = 0
-x_threshold = 10 -50 # 1cm = aligned - the the 50 mm offset
+x_threshold = 10 # 1cm = aligned
+x_offset = -49.0  # Offset to be added to X-distance for calibration
 alignment_start_time = None  # Track when alignment started
 alignment_hold_duration = 3.0  # Hold for 2 seconds
 
@@ -95,9 +96,13 @@ while True:
 
             if marker_id != current_target_id:
                 continue  # skip all other markers
+            
+            if ids is None or current_target_id not in ids: # Target not detected
+                # No markers detected, Move backwards
+                sock.sendto(bytearray(MOVE_Backward, 'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
 
             # Extract X-distance from camera to marker (in mm)
-            x_distance_mm = float(tvec[0][0]) * 10  # convert to mm (multiply by 10)
+            x_distance_mm = float(tvec[0][0]) # convert to mm (multiply by 10)
 
             # Log X-distance
             logger.info(f"X-distance: {x_distance_mm:.2f} mm")
@@ -106,10 +111,10 @@ while True:
             #frame = cv2.drawFrameAxes(frame, CM, dist_coef, rvec, tvec, 100)
 
             # Send movement command based on X-distance
-            if x_distance_mm > x_threshold:
+            if x_distance_mm > x_threshold + x_offset:
                 message = MOVE_Forward
                 alignment_start_time = None  # Reset alignment timer if out of range
-            elif x_distance_mm < -x_threshold:
+            elif x_distance_mm < -x_threshold + x_offset:
                 message = MOVE_Backward
                 alignment_start_time = None  # Reset alignment timer if out of range
             else:
@@ -132,13 +137,11 @@ while True:
                     exit(0)
 
         # Add the frame rate to the image
-        cv2.putText(frame, f"Target ID: {current_target_id} X={x_distance_mm:.1f} mm" , (10, 120 + 30*i), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2,)
+        cv2.putText(frame, f"Target ID: {current_target_id} X={x_distance_mm - x_offset:.1f} mm" , (10, 120 + 30*i), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2,)
         cv2.putText(frame, f"CAMERA FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.putText(frame, f"PROCESSING FPS: {1/processing_period:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
-    else:
-        # No markers detected, Move backwards
-        sock.sendto(bytearray(MOVE_Backward, 'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
+    
         
     # Display the resulting frame
     cv2.imshow('Frame', frame)
