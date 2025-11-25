@@ -34,7 +34,7 @@ dist_coef=camera_calibration['dist_coef']# distortion coefficients from the came
 target_ids = list(range(1, 13))  # [1,2,...12]
 
 current_target_index = 0
-x_threshold = 5.0  # 2cm = aligned
+x_threshold = 10 -50 # 1cm = aligned - the the 50 mm offset
 alignment_start_time = None  # Track when alignment started
 alignment_hold_duration = 3.0  # Hold for 2 seconds
 
@@ -74,19 +74,17 @@ while True:
 
     # Detect markers
     corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
-
     
     # If markers are detected
     if ids is not None:
         
-    
         # Draw detected markers
         frame = aruco.drawDetectedMarkers(frame, corners, ids)
 
         # Estimate pose of each marker
         rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, marker_size, CM, dist_coef)
 
-        x_distance_cm = float('nan')   # Default when not detected
+        x_distance_mm = float('nan')   # Default when not detected
 
 
         for i, (rvec, tvec) in enumerate(zip(rvecs, tvecs)):
@@ -98,20 +96,20 @@ while True:
             if marker_id != current_target_id:
                 continue  # skip all other markers
 
-            # Extract X-distance from camera to marker (in cm)
-            x_distance_cm = float(tvec[0][0])  # convert to float
+            # Extract X-distance from camera to marker (in mm)
+            x_distance_mm = float(tvec[0][0]) * 10  # convert to mm (multiply by 10)
 
             # Log X-distance
-            logger.info(f"X-distance: {x_distance_cm:.2f}")
+            logger.info(f"X-distance: {x_distance_mm:.2f} mm")
             
             # Draw axis for each marker
             #frame = cv2.drawFrameAxes(frame, CM, dist_coef, rvec, tvec, 100)
 
             # Send movement command based on X-distance
-            if x_distance_cm > x_threshold:
+            if x_distance_mm > x_threshold:
                 message = MOVE_Forward
                 alignment_start_time = None  # Reset alignment timer if out of range
-            elif x_distance_cm < -x_threshold:
+            elif x_distance_mm < -x_threshold:
                 message = MOVE_Backward
                 alignment_start_time = None  # Reset alignment timer if out of range
             else:
@@ -134,7 +132,7 @@ while True:
                     exit(0)
 
         # Add the frame rate to the image
-        cv2.putText(frame, f"Target ID: {current_target_id} X={x_distance_cm:.1f}" , (10, 120 + 30*i), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2,)
+        cv2.putText(frame, f"Target ID: {current_target_id} X={x_distance_mm:.1f} mm" , (10, 120 + 30*i), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2,)
         cv2.putText(frame, f"CAMERA FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.putText(frame, f"PROCESSING FPS: {1/processing_period:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
