@@ -14,10 +14,10 @@ UDP_PORT = 50002  # Port to send messages to
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Create UDP socket
 
 # UDP message commands
-MOVE_Start = np.array([1, 0, 0, 0])
-MOVE_Forward = np.array([0, 1, 0, 0])
-MOVE_Backward = np.array([0, 0, 1, 0])
-MOVE_Stop = np.array([0, 0, 0, 1])
+MOVE_Start = "8"
+MOVE_Forward = "4"
+MOVE_Backward = "2"
+MOVE_Stop = "1"
 
 #Camera calibration completed on 17.11.25 
 
@@ -58,8 +58,6 @@ cap = cv2.VideoCapture(0)
 start_time = time.time()
 fps = 0
 
-if start_time is None:
-    sock.sendto(MOVE_Start.encode(), (UDP_IP, UDP_PORT)) # Send command via UDP
 
 while True:
     # Capture frame-by-frame
@@ -74,9 +72,11 @@ while True:
     # Detect markers
     corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
 
+    
     # If markers are detected
     if ids is not None:
         
+    
         # Draw detected markers
         frame = aruco.drawDetectedMarkers(frame, corners, ids)
 
@@ -103,19 +103,19 @@ while True:
 
             # Send movement command based on X-distance
             if x_distance_cm > x_threshold:
-                message = MOVE_Forward.tobytes()
+                message = MOVE_Forward
                 alignment_start_time = None  # Reset alignment timer if out of range
             elif x_distance_cm < -x_threshold:
-                message = MOVE_Backward.tobytes()
+                message = MOVE_Backward
                 alignment_start_time = None  # Reset alignment timer if out of range
             else:
-                message = MOVE_Stop.tobytes  # Aligned
+                message = MOVE_Stop  # Aligned
                 # Start alignement timer
                 if alignment_start_time is None:
                     alignment_start_time = time.time()  # Start timing alignment
                     logger.info(f"Marker ID {current_target_id} aligned. Holding for {alignment_hold_duration} seconds...")
 
-            sock.sendto(message.encode(), (UDP_IP, UDP_PORT)) # Send command via UDP
+            sock.sendto(bytearray(message, 'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
 
             # Check if alignment has been held for 3 seconds
             if alignment_start_time is not None and (time.time() - alignment_start_time) >= alignment_hold_duration:
