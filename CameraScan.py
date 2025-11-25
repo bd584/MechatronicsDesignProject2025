@@ -46,6 +46,10 @@ cap = cv2.VideoCapture(0)
 start_time = time.time()
 fps = 0
 
+#target timer if needed to skip
+target_missing_start = None           
+target_missing_timeout = 5.0 
+
 while True:
     # Capture frame-by-frame
     ret, frame = cap.read()

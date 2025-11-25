@@ -14,10 +14,10 @@ UDP_PORT = 50002  # Port to send messages to
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Create UDP socket
 
 # UDP message commands
-MOVE_Start = "8"
-MOVE_Forward = "4"
-MOVE_Backward = "2"
-MOVE_Stop = "1"
+MOVE_Start = ([1,0,0,0])
+MOVE_Forward = ([0,1,0,0])
+MOVE_Backward = ([0,0,1,0])
+MOVE_Stop = ([0,0,0,1])
 
 #Camera calibration completed on 17.11.25 
 
@@ -83,6 +83,9 @@ while True:
         # Estimate pose of each marker
         rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, marker_size, CM, dist_coef)
 
+        x_distance_cm = float('nan')   # Default when not detected
+
+
         for i, (rvec, tvec) in enumerate(zip(rvecs, tvecs)):
             marker_id = ids[i][0]
 
@@ -115,7 +118,7 @@ while True:
                     alignment_start_time = time.time()  # Start timing alignment
                     logger.info(f"Marker ID {current_target_id} aligned. Holding for {alignment_hold_duration} seconds...")
 
-            sock.sendto(bytearray(message, 'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
+            sock.sendto(bytes(message), (UDP_IP, UDP_PORT)) # Send command via UDP
 
             # Check if alignment has been held for 3 seconds
             if alignment_start_time is not None and (time.time() - alignment_start_time) >= alignment_hold_duration:
