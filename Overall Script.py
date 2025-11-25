@@ -138,6 +138,10 @@ while True:
         cv2.putText(frame, f"CAMERA FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.putText(frame, f"PROCESSING FPS: {1/processing_period:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
+    else:
+        # No markers detected, Move backwards
+        sock.sendto(bytearray(MOVE_Backward, 'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
+        
     # Display the resulting frame
     cv2.imshow('Frame', frame)
 
