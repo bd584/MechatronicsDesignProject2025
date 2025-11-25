@@ -172,6 +172,11 @@ while True:
             if alignment_start_time is not None and (time.time() - alignment_start_time) >= alignment_hold_duration:
                 logger.info(f"Marker ID {current_target_id} held for {alignment_hold_duration} seconds. Moving to next target.")
                 current_target_index += 1
+                # Print and log the next target ID (if any) so the user can see it immediately
+                if current_target_index < len(target_ids):
+                    next_target_id = target_ids[current_target_index]
+                    logger.info(f"Switching to next target ID: {next_target_id}")
+                    print(f"Switching to next target ID: {next_target_id}")
                 if current_target_index >= len(target_ids):
                     logger.info("All target markers aligned. Exiting.")
                     cap.release()
