@@ -31,13 +31,13 @@ CM=camera_calibration['CM'] #camera matrix
 dist_coef=camera_calibration['dist_coef']# distortion coefficients from the camera
 
 # Maximum ID allowed for user entry (this project uses markers 1..12)
-MAX_AREUCO_ID = 12
+MAX_AREUCO_ID = 7
 
 # Ask the user which ArUco targets (IDs) they want to visit, in order
 def get_user_targets(max_id=MAX_AREUCO_ID):
     while True:
         try:
-            num = int(input(f"Enter the number of targets to hit (1-{max_id}): "))
+            num = int(input(f"Welcome Fellow Alien! How many cows would you like to abduct today? Enter the number of targets to hit (1-{max_id}): "))
             if 1 <= num <= max_id:
                 break
             print(f"Please enter a number between 1 and {max_id}.")
@@ -48,12 +48,12 @@ def get_user_targets(max_id=MAX_AREUCO_ID):
     for i in range(num):
         while True:
             try:
-                entry = int(input(f"Enter target #{i+1} ArUCo ID (1-{max_id}): "))
+                entry = int(input(f"Enter cow #{i+1} (1-{max_id}): "))
                 if not (1 <= entry <= max_id):
-                    print(f"ID must be between 1 and {max_id} (inclusive).")
+                    print(f"Not on the menu! Cows must be between 1 and {max_id} (inclusive).")
                     continue
                 if entry in targets:
-                    print("You already entered that ID. Please enter a different one.")
+                    print("You already entered that Cow. Please choose a different one.")
                     continue
                 targets.append(entry)
                 break
@@ -63,7 +63,7 @@ def get_user_targets(max_id=MAX_AREUCO_ID):
 
 # Target ArUco IDs in order the user wants to visit
 target_ids = get_user_targets()
-logger.info(f"Target sequence set by user: {target_ids}")
+logger.info(f"Cow targetting sequence set by Alien: {target_ids}, please bare with us while we jump to hyperspace, then proceed with the abduction!")
 
 current_target_index = 0
 x_threshold = 10 # 1cm = aligned
@@ -164,27 +164,27 @@ while True:
                 # Start alignement timer
                 if alignment_start_time is None:
                     alignment_start_time = time.time()  # Start timing alignment
-                    logger.info(f"Marker ID {current_target_id} aligned. Holding for {alignment_hold_duration} seconds...")
+                    logger.info(f"Abduction in progress on cow #{current_target_id}. Holding for {alignment_hold_duration} seconds...")
 
             sock.sendto(bytes(message, 'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
 
             # Check if alignment has been held for 3 seconds
             if alignment_start_time is not None and (time.time() - alignment_start_time) >= alignment_hold_duration:
-                logger.info(f"Marker ID {current_target_id} held for {alignment_hold_duration} seconds. Moving to next target.")
+                logger.info(f"Abduction complete on cow #{current_target_id} held for {alignment_hold_duration} seconds. Targeting next cow.")
                 current_target_index += 1
                 # Print and log the next target ID (if any) so the user can see it immediately
                 if current_target_index < len(target_ids):
                     next_target_id = target_ids[current_target_index]
                     logger.info(f"Switching to next target ID: {next_target_id}")
-                    print(f"Switching to next target ID: {next_target_id}")
+                    print(f"Switching to next cow: {next_target_id}")
                 if current_target_index >= len(target_ids):
-                    logger.info("All target markers aligned. Exiting.")
+                    logger.info("All cows abducted. Exiting.")
                     cap.release()
                     cv2.destroyAllWindows()
                     exit(0)
 
         # Add the frame rate to the image
-        cv2.putText(frame, f"Target ID: {current_target_id} X={x_distance_mm - x_offset:.1f} mm" , (10, 120 + 30*i), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2,)
+        cv2.putText(frame, f"Cow Number: {current_target_id} 4X={x_distance_mm - x_offset:.1f} mm" , (10, 120 + 30*i), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2,)
         cv2.putText(frame, f"CAMERA FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.putText(frame, f"PROCESSING FPS: {1/processing_period:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
