@@ -73,6 +73,18 @@ while True:
         # Estimate pose of each marker
         rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, marker_size, CM, dist_coef)
 
+        # --- 1. TARGET NOT DETECTED LOGIC ---
+    if current_target_id not in detected_ids:
+        # Start missing timer
+        if target_missing_start is None:
+            target_missing_start = time.time()
+        else:
+            # Check how long it's been missing
+            if time.time() - target_missing_start >= target_missing_timeout:
+                logger.info(f"Target ID {current_target_id} missing for {target_missing_timeout}s → Skipping to next target.")
+
+                current_target_index += 1
+
         for i, (rvec, tvec) in enumerate(zip(rvecs, tvecs)):
             marker_id = ids[i][0]
 

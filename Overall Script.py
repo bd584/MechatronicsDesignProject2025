@@ -14,10 +14,10 @@ UDP_PORT = 50002  # Port to send messages to
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Create UDP socket
 
 # UDP message commands
-MOVE_Start = ([1,0,0,0])
-MOVE_Forward = ([0,1,0,0])
-MOVE_Backward = ([0,0,1,0])
-MOVE_Stop = ([0,0,0,1])
+MOVE_Start = "1"
+MOVE_Forward = "2"
+MOVE_Backward = "3"
+MOVE_Stop = "4"
 
 #Camera calibration completed on 17.11.25 
 
@@ -58,6 +58,9 @@ cap = cv2.VideoCapture(0)
 start_time = time.time()
 fps = 0
 
+#USER INTERFACE SCRIPT THAT ENDS WITH THE START COMMAND BEING SENT
+
+sock.sendto(bytearray(MOVE_Start, 'utf-8'), (UDP_IP, UDP_PORT))
 
 while True:
     # Capture frame-by-frame
@@ -102,7 +105,7 @@ while True:
             logger.info(f"X-distance: {x_distance_cm:.2f}")
             
             # Draw axis for each marker
-            frame = cv2.drawFrameAxes(frame, CM, dist_coef, rvec, tvec, 100)
+            #frame = cv2.drawFrameAxes(frame, CM, dist_coef, rvec, tvec, 100)
 
             # Send movement command based on X-distance
             if x_distance_cm > x_threshold:
@@ -118,7 +121,7 @@ while True:
                     alignment_start_time = time.time()  # Start timing alignment
                     logger.info(f"Marker ID {current_target_id} aligned. Holding for {alignment_hold_duration} seconds...")
 
-            sock.sendto(bytes(message), (UDP_IP, UDP_PORT)) # Send command via UDP
+            sock.sendto(bytearray(message, 'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
 
             # Check if alignment has been held for 3 seconds
             if alignment_start_time is not None and (time.time() - alignment_start_time) >= alignment_hold_duration:
