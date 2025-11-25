@@ -76,33 +76,43 @@ while True:
     # Detect markers
     corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
     
-    # If markers are detected
-    if ids is not None:
-        
-        # Draw detected markers
-        frame = aruco.drawDetectedMarkers(frame, corners, ids)
+    # Top-level handling for when nothing is detected or the current target isn't present
+    # Work out the current target ID here (used in both display and checks)
+    current_target_id = target_ids[current_target_index]
 
-        # Estimate pose of each marker
-        rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, marker_size, CM, dist_coef)
+    # If no markers are detected at all -> Move backwards and skip pose processing
+    if ids is None:
+        sock.sendto(bytes(MOVE_Backward, 'utf-8'), (UDP_IP, UDP_PORT))
+        x_distance_mm = float('nan')   # Default for display
+        i = 0
+        # Draw nothing or leave frame as-is; skip pose estimation
+    else:
+        # Convert ids to a flattened python list for membership check
+        ids_list = ids.flatten().tolist()
 
-        x_distance_mm = float('nan')   # Default when not detected
+        # If the current target isn't present in the detected IDs -> Move backwards
+        if current_target_id not in ids_list:
+            sock.sendto(bytes(MOVE_Backward, 'utf-8'), (UDP_IP, UDP_PORT))
+            x_distance_mm = float('nan')   # Default for display
+            i = 0
+            # Still draw detected markers to inform debugging
+            frame = aruco.drawDetectedMarkers(frame, corners, ids)
+        else:
+            # Target is present -> draw markers and estimate pose of all detected markers
+            frame = aruco.drawDetectedMarkers(frame, corners, ids)
+            rvecs, tvecs, _ = aruco.estimatePoseSingleMarkers(corners, marker_size, CM, dist_coef)
 
+            x_distance_mm = float('nan')   # Default when not detected
 
-        for i, (rvec, tvec) in enumerate(zip(rvecs, tvecs)):
-            marker_id = ids[i][0]
+            for i, (rvec, tvec) in enumerate(zip(rvecs, tvecs)):
+                marker_id = ids[i][0]
 
-            # Only care about the current target marker
-            current_target_id = target_ids[current_target_index]
+                # Only care about the current target marker
+                if marker_id != current_target_id:
+                    continue  # skip all other markers
 
-            if marker_id != current_target_id:
-                continue  # skip all other markers
-            
-            if ids is None or current_target_id not in ids: # Target not detected
-                # No markers detected, Move backwards
-                sock.sendto(bytearray(MOVE_Backward, 'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
-
-            # Extract X-distance from camera to marker (in mm)
-            x_distance_mm = float(tvec[0][0]) # convert to mm (multiply by 10)
+                # Extract X-distance from camera to marker (in mm)
+                x_distance_mm = float(tvec[0][0])
 
             # Log X-distance
             logger.info(f"X-distance: {x_distance_mm:.2f} mm")
