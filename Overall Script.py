@@ -13,6 +13,8 @@ UDP_IP = "138.38.229.217"  # Replace with your Raspberry Pi's IP address
 UDP_PORT = 50002  # Port to send messages to
 sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)  # Create UDP socket
 
+#UDP messages
+MESSAGE_LEFT = "1"
 
 #Camera calibration completed on 17.11.25 
 
@@ -29,9 +31,9 @@ dist_coef=camera_calibration['dist_coef']# distortion coefficients from the came
 target_ids = list(range(1, 13))  # [1,2,...12]
 
 current_target_index = 0
-x_threshold = 2.0  # 1cm = aligned
+x_threshold = 2.0  # 2cm = aligned
 alignment_start_time = None  # Track when alignment started
-alignment_hold_duration = 3.0  # Hold for 3 seconds
+alignment_hold_duration = 1.0  # Hold for 2 seconds
 
 
 # Define the ArUco dictionary and parameters
@@ -102,6 +104,11 @@ while True:
                 alignment_start_time = None  # Reset alignment timer if out of range
             else:
                 message = "0"  # Aligned
+                # Start alignement timer
+                if alignment_start_time is None:
+                    alignment_start_time = time.time()  # Start timing alignment
+                    logger.info(f"Marker ID {current_target_id} aligned. Holding for {alignment_hold_duration} seconds...")
+
             sock.sendto(bytearray(message,'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
 
             # Check if alignment has been held for 3 seconds
@@ -116,8 +123,6 @@ while True:
 
         # Add the frame rate to the image
         cv2.putText(frame, f"Target ID: {current_target_id} X={x_distance_cm:.1f}" , (10, 120 + 30*i), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2,)
-        
-        cv2.putText(frame)
         cv2.putText(frame, f"CAMERA FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
         cv2.putText(frame, f"PROCESSING FPS: {1/processing_period:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
