@@ -34,9 +34,9 @@ dist_coef=camera_calibration['dist_coef']# distortion coefficients from the came
 target_ids = list(range(1, 13))  # [1,2,...12]
 
 current_target_index = 0
-x_threshold = 2.0  # 2cm = aligned
+x_threshold = 5.0  # 2cm = aligned
 alignment_start_time = None  # Track when alignment started
-alignment_hold_duration = 1.0  # Hold for 2 seconds
+alignment_hold_duration = 3.0  # Hold for 2 seconds
 
 
 # Define the ArUco dictionary and parameters
@@ -60,7 +60,7 @@ fps = 0
 
 #USER INTERFACE SCRIPT THAT ENDS WITH THE START COMMAND BEING SENT
 
-sock.sendto(bytearray(MOVE_Start, 'utf-8'), (UDP_IP, UDP_PORT))
+sock.sendto(bytes(MOVE_Start, 'utf-8'), (UDP_IP, UDP_PORT))
 
 while True:
     # Capture frame-by-frame
@@ -121,7 +121,7 @@ while True:
                     alignment_start_time = time.time()  # Start timing alignment
                     logger.info(f"Marker ID {current_target_id} aligned. Holding for {alignment_hold_duration} seconds...")
 
-            sock.sendto(bytearray(message, 'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
+            sock.sendto(bytes(message, 'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
 
             # Check if alignment has been held for 3 seconds
             if alignment_start_time is not None and (time.time() - alignment_start_time) >= alignment_hold_duration:
