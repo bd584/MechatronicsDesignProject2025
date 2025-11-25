@@ -30,6 +30,9 @@ target_ids = list(range(1, 13))  # [1,2,...12]
 
 current_target_index = 0
 x_threshold = 2.0  # 1cm = aligned
+alignment_start_time = None  # Track when alignment started
+alignment_hold_duration = 3.0  # Hold for 3 seconds
+
 
 # Define the ArUco dictionary and parameters
 marker_size = 45
@@ -56,6 +59,9 @@ while True:
     if not ret:
         print("Can't receive frame (stream end?). Exiting ...")
         break
+
+    # Convert frame to grayscale
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     # Detect markers
     corners, ids, rejectedImgPoints = aruco.detectMarkers(gray, aruco_dict, parameters=parameters)
@@ -90,15 +96,17 @@ while True:
             # Send movement command based on X-distance
             if x_distance_cm > x_threshold:
                 message = "2"
+                alignment_start_time = None  # Reset alignment timer if out of range
             elif x_distance_cm < -x_threshold:
                 message = "1"
+                alignment_start_time = None  # Reset alignment timer if out of range
             else:
                 message = "0"  # Aligned
             sock.sendto(bytearray(message,'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
 
-            # Check alignment
-            if abs(x_distance_cm) <= x_threshold:
-                logger.info(f"Marker ID {current_target_id} aligned (X-distance: {x_distance_cm:.2f} cm). Moving to next target.")
+            # Check if alignment has been held for 3 seconds
+            if alignment_start_time is not None and (time.time() - alignment_start_time) >= alignment_hold_duration:
+                logger.info(f"Marker ID {current_target_id} held for {alignment_hold_duration} seconds. Moving to next target.")
                 current_target_index += 1
                 if current_target_index >= len(target_ids):
                     logger.info("All target markers aligned. Exiting.")
@@ -106,10 +114,12 @@ while True:
                     cv2.destroyAllWindows()
                     exit(0)
 
-    # Add the frame rate to the image
-    cv2.putText(frame, f"Target ID: {current_target_id} X={x_distance_cm:.1f}" , (10, 120 + 30*i), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2,)
-    cv2.putText(frame, f"CAMERA FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
-    cv2.putText(frame, f"PROCESSING FPS: {1/processing_period:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        # Add the frame rate to the image
+        cv2.putText(frame, f"Target ID: {current_target_id} X={x_distance_cm:.1f}" , (10, 120 + 30*i), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 200, 255), 2,)
+        
+        cv2.putText(frame)
+        cv2.putText(frame, f"CAMERA FPS: {fps:.2f}", (10, 30), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
+        cv2.putText(frame, f"PROCESSING FPS: {1/processing_period:.2f}", (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 1, (0, 255, 0), 2)
 
     # Display the resulting frame
     cv2.imshow('Frame', frame)
