@@ -18,6 +18,7 @@ MOVE_Start = "1"
 MOVE_Forward = "2"
 MOVE_Backward = "3"
 MOVE_Stop = "4"
+MOVE_End = "5"
 
 #Camera calibration completed on 17.11.25 
 
@@ -83,16 +84,13 @@ processing_period = 0.25
 # Create a window showing the frame
 cv2.namedWindow("Frame", cv2.WINDOW_AUTOSIZE)
 
-
 # Start capturing video
 cap = cv2.VideoCapture(0)
 
 # Set the starting time
 start_time = time.time()
 fps = 0
-
-#USER INTERFACE SCRIPT THAT ENDS WITH THE START COMMAND BEING SENT
-
+# Send initial start command to Raspberry Pi
 sock.sendto(bytes(MOVE_Start, 'utf-8'), (UDP_IP, UDP_PORT))
 
 while True:
@@ -147,7 +145,7 @@ while True:
                 x_distance_mm = float(tvec[0][0])
 
             # Log X-distance
-            logger.info(f"X-distance: {x_distance_mm:.2f} mm")
+            #logger.info(f"X-distance: {x_distance_mm:.2f} mm")
             
             # Draw axis for each marker
             #frame = cv2.drawFrameAxes(frame, CM, dist_coef, rvec, tvec, 100)
@@ -164,6 +162,7 @@ while True:
                 # Start alignement timer
                 if alignment_start_time is None:
                     alignment_start_time = time.time()  # Start timing alignment
+
                     logger.info(f"Abduction in progress on cow #{current_target_id}. Holding for {alignment_hold_duration} seconds...")
 
             sock.sendto(bytes(message, 'utf-8'), (UDP_IP, UDP_PORT)) # Send command via UDP
@@ -178,6 +177,7 @@ while True:
                     logger.info(f"Switching to next target ID: {next_target_id}")
                     print(f"Switching to next cow: {next_target_id}")
                 if current_target_index >= len(target_ids):
+                    sock.sendto(bytes(MOVE_End, 'utf-8'), (UDP_IP, UDP_PORT))
                     logger.info("All cows abducted. Exiting.")
                     cap.release()
                     cv2.destroyAllWindows()
