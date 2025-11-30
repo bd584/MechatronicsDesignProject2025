@@ -69,7 +69,7 @@ current_target_index = 0
 x_threshold = 10 # 1cm = aligned
 x_offset = -49.0  # Offset to be added to X-distance for calibration
 alignment_start_time = None  # Track when alignment started
-alignment_hold_duration = 3.0  # Hold for 2 seconds
+alignment_hold_duration = 3.0  # Hold for 3 seconds
 
 
 # Define the ArUco dictionary and parameters
