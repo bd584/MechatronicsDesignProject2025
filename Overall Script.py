@@ -8,6 +8,7 @@ import time # To ensure a steady processing rate
 import logging 
 import socket  # For UDP communication
 
+
 # UDP configuration
 UDP_IP = "138.38.229.217"  # Replace with your Raspberry Pi's IP address
 UDP_PORT = 50002  # Port to send messages to
@@ -85,7 +86,7 @@ processing_period = 0.25
 cv2.namedWindow("Frame", cv2.WINDOW_AUTOSIZE)
 
 # Start capturing video
-cap = cv2.VideoCapture(0)
+cap = cv2.VideoCapture(1)
 
 # Set the starting time
 start_time = time.time()
@@ -114,7 +115,7 @@ while True:
     if ids is None:
         sock.sendto(bytes(MOVE_Backward, 'utf-8'), (UDP_IP, UDP_PORT))
         x_distance_mm = float('nan')   # Default for display
-        i = 0
+        i = 0 
         # Draw nothing or leave frame as-is; skip pose estimation
     else:
         # Convert ids to a flattened python list for membership check
